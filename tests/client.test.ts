@@ -13,6 +13,46 @@ function createClient(fetchImpl: FetchLike): TaloClient {
 }
 
 describe("TaloClient payments", () => {
+  test("uses sandbox base URL when environment is sandbox", async () => {
+    const requestedUrls: string[] = [];
+
+    const talo = new TaloClient({
+      clientId: "client_123",
+      clientSecret: "secret_456",
+      userId: "user_789",
+      environment: "sandbox",
+      fetch: async (input) => {
+        const url = String(input);
+        requestedUrls.push(url);
+
+        if (url.endsWith("/users/user_789/tokens")) {
+          return new Response(JSON.stringify({ data: { token: "token_abc" } }), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          });
+        }
+
+        return new Response(
+          JSON.stringify({
+            data: {
+              id: "payment_123",
+              payment_status: "PENDING",
+            },
+          }),
+          {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          },
+        );
+      },
+    });
+
+    await talo.getPayment("payment_123");
+
+    expect(requestedUrls[0]).toBe("https://sandbox-api.talo.com.ar/users/user_789/tokens");
+    expect(requestedUrls[1]).toBe("https://sandbox-api.talo.com.ar/payments/payment_123");
+  });
+
   test("creates a payment with typed response", async () => {
     const requestedUrls: string[] = [];
     const requestedInits: RequestInit[] = [];

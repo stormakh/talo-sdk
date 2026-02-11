@@ -16,15 +16,22 @@ import type {
   RefundResponse,
   SimulateFaucetRequest,
   SimulateFaucetResponse,
+  TaloEnvironment,
   TaloClientConfig,
   UpdatePaymentMetadataRequest,
   FetchLike,
 } from "./types";
 
+const TALO_BASE_URLS: Record<TaloEnvironment, string> = {
+  production: "https://api.talo.com.ar",
+  sandbox: "https://sandbox-api.talo.com.ar",
+};
+
 const clientConfigSchema = z.object({
   clientId: z.string().min(1),
   clientSecret: z.string().min(1),
   userId: z.string().min(1),
+  environment: z.enum(["production", "sandbox"]).optional(),
   baseUrl: z.string().url().optional(),
   headers: z.custom<HeadersInit>().optional(),
   fetch: z.custom<FetchLike>().optional(),
@@ -46,7 +53,9 @@ export class TaloClient {
   constructor(config: TaloClientConfig) {
     const parsedConfig = clientConfigSchema.parse(config);
 
-    const baseUrl = parsedConfig.baseUrl ?? "https://api.talo.com.ar";
+    const baseUrl =
+      parsedConfig.baseUrl ??
+      TALO_BASE_URLS[parsedConfig.environment ?? "production"];
 
     const tokenManager = new TaloTokenManager({
       baseUrl,
@@ -68,7 +77,7 @@ export class TaloClient {
     this.customers = new CustomersResource(httpClient);
     this.refunds = new RefundsResource(httpClient);
     this.sandbox = new SandboxResource(httpClient);
-    this.webhooks = new TaloWebhooks();
+    this.webhooks = new TaloWebhooks((paymentId) => this.payments.get(paymentId));
   }
 
   /**

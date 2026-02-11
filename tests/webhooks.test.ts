@@ -1,46 +1,57 @@
 import { describe, expect, test } from "bun:test";
 import { TaloClient } from "../src";
+import type { FetchLike } from "../src/types";
 
-function createClient(): TaloClient {
+function createClient(fetchImpl: FetchLike): TaloClient {
   return new TaloClient({
     clientId: "client_123",
     clientSecret: "secret_456",
     userId: "user_789",
+    fetch: fetchImpl,
   });
 }
 
-function toHex(data: Uint8Array): string {
-  return Array.from(data)
-    .map((value) => value.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-async function hmacSha256Hex(payload: string, secret: string): Promise<string> {
-  const key = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-
-  const signature = await crypto.subtle.sign(
-    "HMAC",
-    key,
-    new TextEncoder().encode(payload),
-  );
-
-  return toHex(new Uint8Array(signature));
-}
-
 describe("TaloWebhooks", () => {
-  test("routes payment update events", async () => {
-    const talo = createClient();
-    let receivedPaymentId = "";
+  test("validates event and fetches payment before callback", async () => {
+    let authCalls = 0;
+    let paymentCalls = 0;
+    let callbackStatus = "";
+
+    const talo = createClient(async (input) => {
+      const url = String(input);
+
+      if (url.endsWith("/users/user_789/tokens")) {
+        authCalls += 1;
+        return new Response(JSON.stringify({ data: { token: "token_abc" } }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      }
+
+      if (url.endsWith("/payments/payment_999")) {
+        paymentCalls += 1;
+        return new Response(
+          JSON.stringify({
+            data: {
+              id: "payment_999",
+              payment_status: "SUCCESS",
+              external_id: "order_999",
+            },
+          }),
+          {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          },
+        );
+      }
+
+      return new Response("Not found", { status: 404 });
+    });
 
     const handler = talo.webhooks.handler({
-      onPaymentUpdated: async (event) => {
-        receivedPaymentId = event.paymentId;
+      onPaymentUpdated: async ({ event, payment }) => {
+        expect(event.paymentId).toBe("payment_999");
+        callbackStatus = payment.payment_status;
       },
     });
 
@@ -56,59 +67,64 @@ describe("TaloWebhooks", () => {
 
     const response = await handler(request);
     expect(response.status).toBe(200);
-    expect(receivedPaymentId).toBe("payment_999");
+    expect(authCalls).toBe(1);
+    expect(paymentCalls).toBe(1);
+    expect(callbackStatus).toBe("SUCCESS");
   });
 
-  test("rejects when signature verification fails", async () => {
-    const talo = createClient();
-
-    const handler = talo.webhooks.handler({
-      secret: "super-secret",
+  test("returns 400 for invalid payload", async () => {
+    const talo = createClient(async () => {
+      throw new Error("should not fetch payment");
     });
+
+    const handler = talo.webhooks.handler();
 
     const request = new Request("https://example.com/webhooks/talo", {
       method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-talo-signature": "invalid-signature",
-      },
+      headers: { "content-type": "application/json" },
       body: JSON.stringify({
         message: "Pago Actualizado",
-        paymentId: "payment_999",
         externalId: "order_999",
       }),
     });
 
     const response = await handler(request);
-    expect(response.status).toBe(401);
+    expect(response.status).toBe(400);
   });
 
-  test("accepts valid signature", async () => {
-    const talo = createClient();
-    const payload = JSON.stringify({
-      message: "Pago recibido",
-      transactionId: "tx_123",
-      customerId: "customer_123",
-    });
-    const signature = await hmacSha256Hex(payload, "super-secret");
+  test("returns 502 when payment lookup fails", async () => {
+    const talo = createClient(async (input) => {
+      const url = String(input);
 
-    const handler = talo.webhooks.handler({
-      secret: "super-secret",
-      onCustomerPayment: async () => {
-        return;
-      },
+      if (url.endsWith("/users/user_789/tokens")) {
+        return new Response(JSON.stringify({ data: { token: "token_abc" } }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      }
+
+      return new Response(
+        JSON.stringify({ message: "Payment not found", code: "not_found" }),
+        {
+          status: 404,
+          headers: { "content-type": "application/json" },
+        },
+      );
     });
+
+    const handler = talo.webhooks.handler();
 
     const request = new Request("https://example.com/webhooks/talo", {
       method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-talo-signature": signature,
-      },
-      body: payload,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        message: "Pago Actualizado",
+        paymentId: "payment_404",
+        externalId: "order_404",
+      }),
     });
 
     const response = await handler(request);
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(502);
   });
 });

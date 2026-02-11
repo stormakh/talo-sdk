@@ -18,6 +18,26 @@ The client manages access tokens automatically using your credentials:
 
 It fetches a token from `POST /users/:user_id/tokens`, caches it in memory, refreshes before expiration, and retries once on `401` with a fresh token.
 
+## Environment selection
+
+The SDK supports first-class environments:
+
+- `environment: "production"` -> `https://api.talo.com.ar`
+- `environment: "sandbox"` -> `https://sandbox-api.talo.com.ar`
+
+If `baseUrl` is provided, it overrides `environment`.
+
+```ts
+import { TaloClient } from "@talo/pay-sdk";
+
+const talo = new TaloClient({
+  clientId: process.env.TALO_CLIENT_ID!,
+  clientSecret: process.env.TALO_CLIENT_SECRET!,
+  userId: process.env.TALO_USER_ID!,
+  environment: "sandbox", // "production" | "sandbox"
+});
+```
+
 ## Create a payment
 
 ```ts
@@ -27,6 +47,7 @@ const talo = new TaloClient({
   clientId: process.env.TALO_CLIENT_ID!,
   clientSecret: process.env.TALO_CLIENT_SECRET!,
   userId: process.env.TALO_USER_ID!,
+  environment: "production",
 });
 
 const payment = await talo.payments.create({
@@ -56,14 +77,12 @@ const talo = new TaloClient({
   clientId: process.env.TALO_CLIENT_ID!,
   clientSecret: process.env.TALO_CLIENT_SECRET!,
   userId: process.env.TALO_USER_ID!,
+  environment: "sandbox",
 });
 
 const handler = talo.webhooks.handler({
-  onPaymentUpdated: async (event) => {
-    console.log(event.paymentId, event.externalId);
-  },
-  onCustomerPayment: async (event) => {
-    console.log(event.customerId, event.transactionId);
+  onPaymentUpdated: async ({ event, payment }) => {
+    console.log(event.paymentId, event.externalId, payment.payment_status);
   },
 });
 
@@ -101,5 +120,6 @@ new TaloClient({
   clientId: process.env.TALO_CLIENT_ID!,
   clientSecret: process.env.TALO_CLIENT_SECRET!,
   userId: process.env.TALO_USER_ID!,
+  environment: "production",
 });
 ```

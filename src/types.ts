@@ -6,7 +6,6 @@ import {
   createCustomerRequestSchema,
   createPaymentRequestSchema,
   createRefundRequestSchema,
-  customerPaymentWebhookEventSchema,
   customerResponseSchema,
   customerTransactionResponseSchema,
   faucetRequestSchema,
@@ -15,7 +14,6 @@ import {
   paymentUpdatedWebhookEventSchema,
   refundResponseSchema,
   updatePaymentMetadataRequestSchema,
-  webhookEventSchema,
 } from "./schemas";
 
 export type FetchLike = (
@@ -23,10 +21,13 @@ export type FetchLike = (
   init?: RequestInit,
 ) => Promise<Response>;
 
+export type TaloEnvironment = "production" | "sandbox";
+
 export interface TaloClientConfig {
   clientId: string;
   clientSecret: string;
   userId: string;
+  environment?: TaloEnvironment | undefined;
   baseUrl?: string | undefined;
   headers?: HeadersInit | undefined;
   fetch?: FetchLike | undefined;
@@ -64,39 +65,21 @@ export type SimulateFaucetResponse = z.infer<typeof faucetResponseSchema>;
 export type PaymentUpdatedWebhookEvent = z.infer<
   typeof paymentUpdatedWebhookEventSchema
 >;
-export type CustomerPaymentWebhookEvent = z.infer<
-  typeof customerPaymentWebhookEventSchema
->;
-export type TaloWebhookEvent = z.infer<typeof webhookEventSchema>;
+export type TaloWebhookEvent = PaymentUpdatedWebhookEvent;
 
 export type TaloApiErrorBody = z.infer<typeof apiErrorBodySchema>;
 
 export interface ParsedWebhookPayload {
   rawBody: string;
-  event: TaloWebhookEvent;
-}
-
-export interface WebhookVerificationOptions {
-  secret: string;
-  signature: string;
-  algorithm?: "SHA-256";
+  event: PaymentUpdatedWebhookEvent;
 }
 
 export interface WebhookHandlerOptions {
-  secret?: string;
-  signatureHeader?: string;
-  verifySignature?: (context: {
-    request: Request;
-    rawBody: string;
-    signature: string | null;
-  }) => boolean | Promise<boolean>;
   onPaymentUpdated?: (
-    event: PaymentUpdatedWebhookEvent,
-    request: Request,
+    context: {
+      event: PaymentUpdatedWebhookEvent;
+      payment: PaymentResponse;
+      request: Request;
+    },
   ) => void | Promise<void>;
-  onCustomerPayment?: (
-    event: CustomerPaymentWebhookEvent,
-    request: Request,
-  ) => void | Promise<void>;
-  onEvent?: (event: TaloWebhookEvent, request: Request) => void | Promise<void>;
 }

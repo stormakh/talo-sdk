@@ -9,5 +9,6 @@ This folder contains practical integration examples for Talo payments in popular
 
 All examples use `@talo/pay-sdk` and show:
 - Credentials-based client initialization (`clientId`, `clientSecret`, `userId`).
+- Environment selection via `environment: "production" | "sandbox"`.
 - Payment creation endpoint.
 - Webhook handling endpoint using `talo.webhooks.handler(...)` with WinterCG `Request`/`Response`.

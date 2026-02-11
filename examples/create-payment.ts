@@ -4,7 +4,8 @@ const talo = new TaloClient({
   clientId: process.env.TALO_CLIENT_ID!,
   clientSecret: process.env.TALO_CLIENT_SECRET!,
   userId: process.env.TALO_USER_ID!,
-  // baseUrl: "https://api.talo.com.ar", // optional override
+  environment: "sandbox", // "production" | "sandbox"
+  // baseUrl: "https://sandbox-api.talo.com.ar", // overrides environment when present
 });
 
 const payment = await talo.createPayment({

@@ -1,5 +1,14 @@
 # NestJS
 
+## Environment setup
+
+Use `environment` for first-class API selection:
+
+- `"production"` -> `https://api.talo.com.ar`
+- `"sandbox"` -> `https://sandbox-api.talo.com.ar`
+
+`baseUrl` overrides `environment` if both are provided.
+
 ## 1) `src/talo/talo.service.ts`
 
 ```ts
@@ -12,6 +21,7 @@ export class TaloService {
     clientId: process.env.TALO_CLIENT_ID!,
     clientSecret: process.env.TALO_CLIENT_SECRET!,
     userId: process.env.TALO_USER_ID!,
+    environment: "sandbox",
   });
 }
 ```
@@ -70,8 +80,8 @@ export class TaloWebhooksController {
     });
 
     const response = await this.taloService.client.webhooks.handler({
-      onPaymentUpdated: async (event) => {
-        console.log("payment.updated", event.paymentId, event.externalId);
+      onPaymentUpdated: async ({ event, payment }) => {
+        console.log("payment.updated", event.paymentId, event.externalId, payment.payment_status);
       },
     })(webRequest);
 

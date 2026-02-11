@@ -1,5 +1,14 @@
 # Elysia
 
+## Environment setup
+
+Use `environment` for first-class API selection:
+
+- `"production"` -> `https://api.talo.com.ar`
+- `"sandbox"` -> `https://sandbox-api.talo.com.ar`
+
+`baseUrl` overrides `environment` if both are provided.
+
 ## `src/server.ts`
 
 ```ts
@@ -12,6 +21,7 @@ const talo = new TaloClient({
   clientId: process.env.TALO_CLIENT_ID!,
   clientSecret: process.env.TALO_CLIENT_SECRET!,
   userId: process.env.TALO_USER_ID!,
+  environment: "sandbox",
 });
 
 app.post("/payments", async ({ body, request }) => {
@@ -34,11 +44,8 @@ app.post("/payments", async ({ body, request }) => {
 });
 
 const webhookHandler = talo.webhooks.handler({
-  onPaymentUpdated: async (event) => {
-    console.log("payment.updated", event.paymentId, event.externalId);
-  },
-  onCustomerPayment: async (event) => {
-    console.log("customer.payment", event.customerId, event.transactionId);
+  onPaymentUpdated: async ({ event, payment }) => {
+    console.log("payment.updated", event.paymentId, event.externalId, payment.payment_status);
   },
 });
 

@@ -233,18 +233,7 @@ export const paymentUpdatedWebhookEventSchema = z
   })
   .passthrough();
 
-export const customerPaymentWebhookEventSchema = z
-  .object({
-    message: z.string(),
-    transactionId: z.string(),
-    customerId: z.string(),
-  })
-  .passthrough();
-
-export const webhookEventSchema = z.union([
-  paymentUpdatedWebhookEventSchema,
-  customerPaymentWebhookEventSchema,
-]);
+export const webhookEventSchema = paymentUpdatedWebhookEventSchema;
 
 export const apiErrorBodySchema = z
   .object({

@@ -1,5 +1,14 @@
 # Hono
 
+## Environment setup
+
+Use `environment` for first-class API selection:
+
+- `"production"` -> `https://api.talo.com.ar`
+- `"sandbox"` -> `https://sandbox-api.talo.com.ar`
+
+`baseUrl` overrides `environment` if both are provided.
+
 ## `src/index.ts`
 
 ```ts
@@ -12,6 +21,7 @@ const talo = new TaloClient({
   clientId: process.env.TALO_CLIENT_ID!,
   clientSecret: process.env.TALO_CLIENT_SECRET!,
   userId: process.env.TALO_USER_ID!,
+  environment: "sandbox",
 });
 
 app.post("/payments", async (c) => {
@@ -34,8 +44,8 @@ app.post("/payments", async (c) => {
 });
 
 const webhookHandler = talo.webhooks.handler({
-  onPaymentUpdated: async (event) => {
-    console.log("payment.updated", event.paymentId, event.externalId);
+  onPaymentUpdated: async ({ event, payment }) => {
+    console.log("payment.updated", event.paymentId, event.externalId, payment.payment_status);
   },
 });
 
