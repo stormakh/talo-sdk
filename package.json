@@ -1,0 +1,40 @@
+{
+  "name": "@talo/pay-sdk",
+  "version": "0.1.0",
+  "description": "Type-safe WinterCG-compatible TypeScript SDK for Talo Pay API",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --dts --format esm,cjs --clean",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "keywords": [
+    "talo",
+    "sdk",
+    "payments",
+    "wintercg",
+    "typescript"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.2.2",
+    "tsup": "^8.4.0",
+    "typescript": "^5.7.3"
+  }
+}
