@@ -8,7 +8,9 @@
 import { TaloClient } from "@talo/pay-sdk";
 
 export const talo = new TaloClient({
-  accessToken: process.env.TALO_ACCESS_TOKEN!,
+  clientId: process.env.TALO_CLIENT_ID!,
+  clientSecret: process.env.TALO_CLIENT_SECRET!,
+  userId: process.env.TALO_USER_ID!,
   // baseUrl: process.env.TALO_BASE_URL, // optional
 });
 ```
@@ -24,14 +26,13 @@ export async function POST(request: Request): Promise<Response> {
   const body = await request.json();
 
   const payment = await talo.payments.create({
+    user_id: process.env.TALO_USER_ID!,
     price: { amount: body.amount, currency: "ARS" },
     payment_options: ["transfer"],
-    expiration_date: body.expirationDate,
-    callback_url: `${process.env.PUBLIC_BASE_URL}/api/talo/webhook`,
     external_id: body.orderId,
-    description: `Order #${body.orderId}`,
-    customer_data: body.customer,
-    metadata: { source: "nextjs-checkout" },
+    webhook_url: `${process.env.PUBLIC_BASE_URL}/api/talo/webhook`,
+    motive: body.motive ?? `Order #${body.orderId}`,
+    client_data: body.clientData,
   });
 
   return Response.json({ payment });
@@ -48,11 +49,9 @@ import { talo } from "@/lib/talo";
 const handler = talo.webhooks.handler({
   // secret: process.env.TALO_WEBHOOK_SECRET,
   onPaymentUpdated: async (event) => {
-    // e.g. update order status by event.externalId
     console.log("payment.updated", event.paymentId, event.externalId);
   },
   onCustomerPayment: async (event) => {
-    // e.g. reconcile wallet transfer
     console.log("customer.payment", event.customerId, event.transactionId);
   },
 });

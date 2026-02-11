@@ -1,10 +1,11 @@
 import { ZodError, type z } from "zod";
 import { TaloError } from "./errors";
 import type { FetchLike } from "../types";
+import type { AccessTokenProvider } from "./auth";
 
 export interface TaloHttpClientConfig {
   baseUrl: string;
-  accessToken: string;
+  tokenProvider: AccessTokenProvider;
   headers?: HeadersInit | undefined;
   fetch?: FetchLike | undefined;
 }
@@ -48,13 +49,13 @@ function parseResponseBody(raw: string): unknown {
 
 export class TaloHttpClient {
   private readonly baseUrl: string;
-  private readonly accessToken: string;
+  private readonly tokenProvider: AccessTokenProvider;
   private readonly baseHeaders: HeadersInit | undefined;
   private readonly fetchImpl: FetchLike;
 
   constructor(config: TaloHttpClientConfig) {
     this.baseUrl = config.baseUrl;
-    this.accessToken = config.accessToken;
+    this.tokenProvider = config.tokenProvider;
     this.baseHeaders = config.headers;
     this.fetchImpl = config.fetch ?? fetch;
   }
@@ -70,42 +71,66 @@ export class TaloHttpClient {
         ? options.requestSchema.parse(options.body)
         : options.body;
 
-    const headers = new Headers(this.baseHeaders);
+    const requestBody =
+      validatedBody === undefined ? undefined : JSON.stringify(validatedBody);
+
+    const baseHeaders = new Headers(this.baseHeaders);
 
     if (options.headers !== undefined) {
       const runtimeHeaders = new Headers(options.headers);
       runtimeHeaders.forEach((value, key) => {
-        headers.set(key, value);
+        baseHeaders.set(key, value);
       });
     }
 
-    if (!headers.has("authorization")) {
-      const token = this.accessToken.startsWith("Bearer ")
-        ? this.accessToken
-        : `Bearer ${this.accessToken}`;
-      headers.set("authorization", token);
-    }
+    const hasCustomAuthorization = baseHeaders.has("authorization");
 
-    headers.set("accept", "application/json");
+    const executeRequest = async (
+      authorizationToken: string | undefined,
+    ): Promise<Response> => {
+      const headers = new Headers(baseHeaders);
 
-    if (validatedBody !== undefined) {
-      headers.set("content-type", "application/json");
-    }
+      if (!hasCustomAuthorization && authorizationToken !== undefined) {
+        const token = authorizationToken.startsWith("Bearer ")
+          ? authorizationToken
+          : `Bearer ${authorizationToken}`;
+        headers.set("authorization", token);
+      }
 
-    const init: RequestInit = {
-      method: options.method,
-      headers,
+      headers.set("accept", "application/json");
+
+      if (requestBody !== undefined) {
+        headers.set("content-type", "application/json");
+      }
+
+      const init: RequestInit = {
+        method: options.method,
+        headers,
+      };
+
+      if (requestBody !== undefined) {
+        init.body = requestBody;
+      }
+
+      if (options.signal !== undefined) {
+        init.signal = options.signal;
+      }
+
+      return this.fetchImpl(buildUrl(this.baseUrl, options.path), init);
     };
 
-    if (validatedBody !== undefined) {
-      init.body = JSON.stringify(validatedBody);
-    }
+    const initialToken = hasCustomAuthorization
+      ? undefined
+      : await this.tokenProvider.getAccessToken();
 
-    if (options.signal !== undefined) {
-      init.signal = options.signal;
-    }
+    let response = await executeRequest(initialToken);
 
-    const response = await this.fetchImpl(buildUrl(this.baseUrl, options.path), init);
+    if (response.status === 401 && !hasCustomAuthorization) {
+      const refreshedToken = await this.tokenProvider.getAccessToken({
+        forceRefresh: true,
+      });
+      response = await executeRequest(refreshedToken);
+    }
 
     const rawBody = await response.text();
     const parsedBody = parseResponseBody(rawBody);

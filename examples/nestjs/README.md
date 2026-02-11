@@ -9,7 +9,9 @@ import { TaloClient } from "@talo/pay-sdk";
 @Injectable()
 export class TaloService {
   readonly client = new TaloClient({
-    accessToken: process.env.TALO_ACCESS_TOKEN!,
+    clientId: process.env.TALO_CLIENT_ID!,
+    clientSecret: process.env.TALO_CLIENT_SECRET!,
+    userId: process.env.TALO_USER_ID!,
   });
 }
 ```
@@ -29,18 +31,18 @@ export class PaymentsController {
     @Body()
     body: {
       amount: number;
-      expirationDate: string;
       orderId: string;
-      callbackUrl: string;
+      webhookUrl: string;
+      motive?: string;
     },
   ) {
     const payment = await this.taloService.client.createPayment({
+      user_id: process.env.TALO_USER_ID!,
       price: { amount: body.amount, currency: "ARS" },
       payment_options: ["transfer"],
-      expiration_date: body.expirationDate,
-      callback_url: body.callbackUrl,
       external_id: body.orderId,
-      description: `Order #${body.orderId}`,
+      webhook_url: body.webhookUrl,
+      motive: body.motive ?? `Order #${body.orderId}`,
     });
 
     return { payment };
@@ -61,7 +63,6 @@ export class TaloWebhooksController {
 
   @Post()
   async handle(@Req() req: ExpressRequest, @Res() res: ExpressResponse) {
-    // Rebuild a Web API Request so the SDK webhook handler stays WinterCG-native.
     const webRequest = new Request(`${req.protocol}://${req.get("host")}${req.originalUrl}`, {
       method: req.method,
       headers: req.headers as HeadersInit,

@@ -24,24 +24,42 @@ export const priceSchema = z.object({
   currency: currencySchema,
 });
 
-export const customerDataSchema = z
+export const createPaymentPriceSchema = z.object({
+  amount: z.number(),
+  currency: currencySchema,
+});
+
+export const clientDataSchema = z
   .object({
-    full_name: z.string().min(1),
-    document_id: z.string().min(1),
-    email: z.string().email(),
+    first_name: z.string().min(1),
+    last_name: z.string().min(1),
     phone: z.string().min(1),
+    email: z.string().email(),
+    dni: z.string().min(1),
+    cuit: z.string().min(1),
   })
   .partial();
 
+export const authorizeRequestSchema = z.object({
+  client_id: z.string().min(1),
+  client_secret: z.string().min(1),
+});
+
+export const authorizeDataSchema = z
+  .object({
+    token: z.string().min(1),
+  })
+  .passthrough();
+
 export const createPaymentRequestSchema = z.object({
-  price: priceSchema,
+  user_id: z.string().min(1),
+  price: createPaymentPriceSchema,
   payment_options: z.array(paymentOptionSchema).min(1),
-  expiration_date: z.string().datetime({ offset: true }),
-  callback_url: z.string().url(),
-  external_id: z.string().min(1).optional(),
-  description: z.string().min(1),
-  customer_data: customerDataSchema.optional(),
-  metadata: z.record(z.unknown()).optional(),
+  external_id: z.string().min(1),
+  webhook_url: z.string().url(),
+  redirect_url: z.string().url().optional(),
+  motive: z.string().min(1).optional(),
+  client_data: clientDataSchema.optional(),
 });
 
 export const updatePaymentMetadataRequestSchema = z.object({
@@ -59,20 +77,46 @@ export const quoteSchema = z
   })
   .passthrough();
 
+export const transactionFieldSchema = z
+  .object({
+    amount: numericAmountSchema.optional(),
+    cvu: z.string().optional(),
+    alias: z.string().optional(),
+  })
+  .passthrough();
+
+export const transactionSchema = z
+  .object({
+    amount: numericAmountSchema.optional(),
+    currency: z.string().optional(),
+    payment_date: z.string().optional(),
+    beneficiary_name: z.string().optional(),
+    cuit: z.string().optional(),
+    cbu: z.string().optional(),
+    cvu: z.string().optional(),
+    alias: z.string().optional(),
+  })
+  .passthrough();
+
 export const paymentSchema = z
   .object({
     id: z.string(),
     payment_status: paymentStatusSchema,
+    user_id: z.string().optional(),
     quotes: z.array(quoteSchema).optional(),
+    transaction_fields: z.array(transactionFieldSchema).optional(),
+    transactions: z.array(transactionSchema).optional(),
     payment_url: z.string().url().optional(),
     external_id: z.string().optional(),
     expiration_timestamp: z.string().optional(),
     creation_timestamp: z.string().optional(),
-    updated_timestamp: z.string().optional(),
+    last_modified_timestamp: z.string().optional(),
     price: priceSchema.optional(),
     payment_options: z.array(paymentOptionSchema).optional(),
-    description: z.string().optional(),
-    callback_url: z.string().optional(),
+    webhook_url: z.string().optional(),
+    redirect_url: z.string().optional(),
+    motive: z.string().optional(),
+    client_data: clientDataSchema.optional(),
     metadata: z.record(z.unknown()).optional(),
   })
   .passthrough();
@@ -179,6 +223,7 @@ export const customerTransactionResponseSchema = successEnvelopeSchema(
   customerTransactionSchema,
 );
 export const refundResponseSchema = successEnvelopeSchema(refundSchema);
+export const authorizeResponseSchema = successEnvelopeSchema(authorizeDataSchema);
 
 export const paymentUpdatedWebhookEventSchema = z
   .object({

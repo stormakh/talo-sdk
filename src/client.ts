@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { TaloTokenManager } from "./core/auth";
 import { TaloHttpClient } from "./core/http";
 import { CustomersResource } from "./resources/customers";
 import { PaymentsResource } from "./resources/payments";
@@ -20,26 +21,20 @@ import type {
   FetchLike,
 } from "./types";
 
-const clientConfigSchema = z
-  .object({
-    apiKey: z.string().min(1).optional(),
-    accessToken: z.string().min(1).optional(),
-    baseUrl: z.string().url().optional(),
-    headers: z.custom<HeadersInit>().optional(),
-    fetch: z.custom<FetchLike>().optional(),
-  })
-  .superRefine((value, ctx) => {
-    if (value.apiKey === undefined && value.accessToken === undefined) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["apiKey"],
-        message: "Either apiKey or accessToken must be provided",
-      });
-    }
-  });
+const clientConfigSchema = z.object({
+  clientId: z.string().min(1),
+  clientSecret: z.string().min(1),
+  userId: z.string().min(1),
+  baseUrl: z.string().url().optional(),
+  headers: z.custom<HeadersInit>().optional(),
+  fetch: z.custom<FetchLike>().optional(),
+});
 
 /**
  * Talo API client for Payments, Customers, Refunds and Webhooks.
+ *
+ * Access tokens are automatically fetched and refreshed from
+ * POST /users/:user_id/tokens using client credentials.
  */
 export class TaloClient {
   readonly payments: PaymentsResource;
@@ -50,15 +45,21 @@ export class TaloClient {
 
   constructor(config: TaloClientConfig) {
     const parsedConfig = clientConfigSchema.parse(config);
-    const accessToken = parsedConfig.accessToken ?? parsedConfig.apiKey;
 
-    if (accessToken === undefined) {
-      throw new TypeError("Either apiKey or accessToken must be provided");
-    }
+    const baseUrl = parsedConfig.baseUrl ?? "https://api.talo.com.ar";
+
+    const tokenManager = new TaloTokenManager({
+      baseUrl,
+      clientId: parsedConfig.clientId,
+      clientSecret: parsedConfig.clientSecret,
+      userId: parsedConfig.userId,
+      headers: parsedConfig.headers,
+      fetch: parsedConfig.fetch,
+    });
 
     const httpClient = new TaloHttpClient({
-      baseUrl: parsedConfig.baseUrl ?? "https://api.talo.com.ar",
-      accessToken,
+      baseUrl,
+      tokenProvider: tokenManager,
       headers: parsedConfig.headers,
       fetch: parsedConfig.fetch,
     });

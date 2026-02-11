@@ -9,23 +9,25 @@ import { TaloClient } from "@talo/pay-sdk";
 const app = new Elysia();
 
 const talo = new TaloClient({
-  accessToken: process.env.TALO_ACCESS_TOKEN!,
+  clientId: process.env.TALO_CLIENT_ID!,
+  clientSecret: process.env.TALO_CLIENT_SECRET!,
+  userId: process.env.TALO_USER_ID!,
 });
 
 app.post("/payments", async ({ body, request }) => {
   const input = body as {
     amount: number;
-    expirationDate: string;
     orderId: string;
+    motive?: string;
   };
 
   const payment = await talo.payments.create({
+    user_id: process.env.TALO_USER_ID!,
     price: { amount: input.amount, currency: "ARS" },
     payment_options: ["transfer"],
-    expiration_date: input.expirationDate,
-    callback_url: `${new URL(request.url).origin}/webhooks/talo`,
     external_id: input.orderId,
-    description: `Order #${input.orderId}`,
+    webhook_url: `${new URL(request.url).origin}/webhooks/talo`,
+    motive: input.motive ?? `Order #${input.orderId}`,
   });
 
   return { payment };

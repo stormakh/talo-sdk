@@ -1,6 +1,14 @@
 import { describe, expect, test } from "bun:test";
 import { TaloClient } from "../src";
 
+function createClient(): TaloClient {
+  return new TaloClient({
+    clientId: "client_123",
+    clientSecret: "secret_456",
+    userId: "user_789",
+  });
+}
+
 function toHex(data: Uint8Array): string {
   return Array.from(data)
     .map((value) => value.toString(16).padStart(2, "0"))
@@ -27,7 +35,7 @@ async function hmacSha256Hex(payload: string, secret: string): Promise<string> {
 
 describe("TaloWebhooks", () => {
   test("routes payment update events", async () => {
-    const talo = new TaloClient({ accessToken: "token" });
+    const talo = createClient();
     let receivedPaymentId = "";
 
     const handler = talo.webhooks.handler({
@@ -52,7 +60,7 @@ describe("TaloWebhooks", () => {
   });
 
   test("rejects when signature verification fails", async () => {
-    const talo = new TaloClient({ accessToken: "token" });
+    const talo = createClient();
 
     const handler = talo.webhooks.handler({
       secret: "super-secret",
@@ -76,7 +84,7 @@ describe("TaloWebhooks", () => {
   });
 
   test("accepts valid signature", async () => {
-    const talo = new TaloClient({ accessToken: "token" });
+    const talo = createClient();
     const payload = JSON.stringify({
       message: "Pago recibido",
       transactionId: "tx_123",

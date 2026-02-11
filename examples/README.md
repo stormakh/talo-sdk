@@ -8,5 +8,6 @@ This folder contains practical integration examples for Talo payments in popular
 - [NestJS](./nestjs/README.md)
 
 All examples use `@talo/pay-sdk` and show:
+- Credentials-based client initialization (`clientId`, `clientSecret`, `userId`).
 - Payment creation endpoint.
 - Webhook handling endpoint using `talo.webhooks.handler(...)` with WinterCG `Request`/`Response`.

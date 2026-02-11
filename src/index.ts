@@ -4,11 +4,15 @@ export { TaloWebhooks } from "./webhooks";
 
 export {
   apiErrorBodySchema,
+  authorizeDataSchema,
+  authorizeRequestSchema,
+  authorizeResponseSchema,
   bankInfoSchema,
+  clientDataSchema,
+  createPaymentPriceSchema,
   createCustomerRequestSchema,
   createPaymentRequestSchema,
   createRefundRequestSchema,
-  customerDataSchema,
   customerPaymentWebhookEventSchema,
   customerResponseSchema,
   customerSchema,
@@ -20,6 +24,8 @@ export {
   paymentResponseSchema,
   paymentSchema,
   paymentStatusSchema,
+  transactionFieldSchema,
+  transactionSchema,
   paymentUpdatedWebhookEventSchema,
   priceSchema,
   quoteSchema,
@@ -30,6 +36,9 @@ export {
 } from "./schemas";
 
 export type {
+  AuthorizeRequest,
+  AuthorizeResponse,
+  AuthorizeResponseEnvelope,
   CreateCustomerRequest,
   CreatePaymentRequest,
   CreateRefundRequest,

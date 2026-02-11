@@ -8,22 +8,40 @@ Type-safe, WinterCG-compatible SDK for the Talo Transfers API.
 bun add @talo/pay-sdk
 ```
 
+## Authentication behavior
+
+The client manages access tokens automatically using your credentials:
+
+- `clientId`
+- `clientSecret`
+- `userId`
+
+It fetches a token from `POST /users/:user_id/tokens`, caches it in memory, refreshes before expiration, and retries once on `401` with a fresh token.
+
 ## Create a payment
 
 ```ts
 import { TaloClient } from "@talo/pay-sdk";
 
 const talo = new TaloClient({
-  accessToken: process.env.TALO_ACCESS_TOKEN!,
+  clientId: process.env.TALO_CLIENT_ID!,
+  clientSecret: process.env.TALO_CLIENT_SECRET!,
+  userId: process.env.TALO_USER_ID!,
 });
 
 const payment = await talo.payments.create({
+  user_id: process.env.TALO_USER_ID!,
   price: { amount: 10000, currency: "ARS" },
   payment_options: ["transfer"],
-  expiration_date: "2026-12-31T23:59:59-03:00",
-  callback_url: "https://your-app.com/api/talo/webhook",
-  description: "Order #12345",
   external_id: "order_12345",
+  webhook_url: "https://your-app.com/api/talo/webhook",
+  motive: "Order #12345",
+  client_data: {
+    first_name: "Juan",
+    last_name: "Perez",
+    email: "juan@example.com",
+    dni: "12345678",
+  },
 });
 
 console.log(payment.id, payment.payment_status);
@@ -35,7 +53,9 @@ console.log(payment.id, payment.payment_status);
 import { TaloClient } from "@talo/pay-sdk";
 
 const talo = new TaloClient({
-  accessToken: process.env.TALO_ACCESS_TOKEN!,
+  clientId: process.env.TALO_CLIENT_ID!,
+  clientSecret: process.env.TALO_CLIENT_SECRET!,
+  userId: process.env.TALO_USER_ID!,
 });
 
 const handler = talo.webhooks.handler({
@@ -65,3 +85,21 @@ export async function POST(request: Request): Promise<Response> {
 - `talo.webhooks.handler(...)`
 
 Top-level aliases are available too (for example, `talo.createPayment(...)`).
+
+## Migration (breaking)
+
+Before:
+
+```ts
+new TaloClient({ accessToken: "..." });
+```
+
+After:
+
+```ts
+new TaloClient({
+  clientId: process.env.TALO_CLIENT_ID!,
+  clientSecret: process.env.TALO_CLIENT_SECRET!,
+  userId: process.env.TALO_USER_ID!,
+});
+```

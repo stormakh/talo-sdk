@@ -1,6 +1,8 @@
 import type { z } from "zod";
 import {
   apiErrorBodySchema,
+  authorizeRequestSchema,
+  authorizeResponseSchema,
   createCustomerRequestSchema,
   createPaymentRequestSchema,
   createRefundRequestSchema,
@@ -22,12 +24,17 @@ export type FetchLike = (
 ) => Promise<Response>;
 
 export interface TaloClientConfig {
-  apiKey?: string | undefined;
-  accessToken?: string | undefined;
+  clientId: string;
+  clientSecret: string;
+  userId: string;
   baseUrl?: string | undefined;
   headers?: HeadersInit | undefined;
   fetch?: FetchLike | undefined;
 }
+
+export type AuthorizeRequest = z.infer<typeof authorizeRequestSchema>;
+export type AuthorizeResponseEnvelope = z.infer<typeof authorizeResponseSchema>;
+export type AuthorizeResponse = AuthorizeResponseEnvelope["data"];
 
 export type CreatePaymentRequest = z.infer<typeof createPaymentRequestSchema>;
 export type UpdatePaymentMetadataRequest = z.infer<
