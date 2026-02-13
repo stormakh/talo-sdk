@@ -104,7 +104,7 @@ export const paymentSchema = z
     payment_status: paymentStatusSchema,
     user_id: z.string().optional(),
     quotes: z.array(quoteSchema).optional(),
-    transaction_fields: z.array(transactionFieldSchema).optional(),
+    transaction_fields: transactionFieldSchema.optional(),
     transactions: z.array(transactionSchema).optional(),
     payment_url: z.string().url().optional(),
     external_id: z.string().optional(),

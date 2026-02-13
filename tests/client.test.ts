@@ -160,6 +160,79 @@ describe("TaloClient payments", () => {
     });
   });
 
+  test("parses get payment response when transaction_fields is an object", async () => {
+    const talo = createClient(async (input) => {
+      const url = String(input);
+
+      if (url.endsWith("/users/user_789/tokens")) {
+        return new Response(
+          JSON.stringify({ data: { token: "token_abc" } }),
+          {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          },
+        );
+      }
+
+      return new Response(
+        JSON.stringify({
+          message: "ok",
+          error: false,
+          code: 200,
+          data: {
+            id: "VAR-c8953b10-payment",
+            payment_status: "SUCCESS",
+            external_id: "img_a5c47d84",
+            payment_url: "https://talo.com.ar/payments/VAR-c8953b10-payment",
+            creation_timestamp: "2026-02-13T14:47:31.212Z",
+            expiration_timestamp: "2026-02-14T13:47:31.212Z",
+            last_modified_timestamp: "2026-02-13T14:48:07.761Z",
+            price: { amount: 100, currency: "ARS" },
+            payment_options: ["transfer"],
+            quotes: [
+              {
+                alias: "kamrot.8881.talo",
+                amount: "100",
+                address: "0000335100000000004774",
+                network: "CRESIUM",
+              },
+            ],
+            transaction_fields: {
+              amount: "100",
+              commission_amount: "0",
+              currency: "ARS",
+            },
+            transactions: [
+              {
+                transaction_id: "CRS-198-304855",
+                amount: "100",
+                transaction_status: "PROCESSED",
+                network: "CRESIUM",
+              },
+            ],
+            user_id: "c8953b10-a179-438d-8a1a-2d59f850db3d",
+            webhook_url: "https://image-generation-demo.vercel.app/api/webhooks/talo",
+            status: "SUCCESS",
+          },
+        }),
+        {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        },
+      );
+    });
+
+    const payment = await talo.getPayment("VAR-c8953b10-payment");
+
+    expect(payment.id).toBe("VAR-c8953b10-payment");
+    expect(payment.payment_status).toBe("SUCCESS");
+    expect(payment.transaction_fields).toMatchObject({
+      amount: "100",
+      commission_amount: "0",
+      currency: "ARS",
+    });
+  });
+
   test("rejects create payment when price.amount is not a number", async () => {
     const talo = createClient(async (input) => {
       const url = String(input);
