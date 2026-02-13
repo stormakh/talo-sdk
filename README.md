@@ -5,7 +5,9 @@ Type-safe, WinterCG-compatible SDK for the Talo Transfers API.
 ## Install
 
 ```bash
-bun add @talo/pay-sdk
+npm install talo-pay
+# or
+bun add talo-pay
 ```
 
 ## Authentication behavior
@@ -28,7 +30,7 @@ The SDK supports first-class environments:
 If `baseUrl` is provided, it overrides `environment`.
 
 ```ts
-import { TaloClient } from "@talo/pay-sdk";
+import { TaloClient } from "talo-pay";
 
 const talo = new TaloClient({
   clientId: process.env.TALO_CLIENT_ID!,
@@ -41,7 +43,7 @@ const talo = new TaloClient({
 ## Create a payment
 
 ```ts
-import { TaloClient } from "@talo/pay-sdk";
+import { TaloClient } from "talo-pay";
 
 const talo = new TaloClient({
   clientId: process.env.TALO_CLIENT_ID!,
@@ -71,7 +73,7 @@ console.log(payment.id, payment.payment_status);
 ## Next.js App Router webhook route
 
 ```ts
-import { TaloClient } from "@talo/pay-sdk";
+import { TaloClient } from "talo-pay";
 
 const talo = new TaloClient({
   clientId: process.env.TALO_CLIENT_ID!,
@@ -90,6 +92,12 @@ export async function POST(request: Request): Promise<Response> {
   return handler(request);
 }
 ```
+
+## Documentation
+
+- Getting started: `docs/getting-started.md`
+- Environments: `docs/environments.md`
+- Webhooks: `docs/webhooks.md`
 
 ## Resources
 

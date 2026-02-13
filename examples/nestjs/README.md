@@ -13,7 +13,7 @@ Use `environment` for first-class API selection:
 
 ```ts
 import { Injectable } from "@nestjs/common";
-import { TaloClient } from "@talo/pay-sdk";
+import { TaloClient } from "talo-pay";
 
 @Injectable()
 export class TaloService {

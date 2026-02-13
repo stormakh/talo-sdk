@@ -13,7 +13,7 @@ Use `environment` for first-class API selection:
 
 ```ts
 import { Hono } from "hono";
-import { TaloClient } from "@talo/pay-sdk";
+import { TaloClient } from "talo-pay";
 
 const app = new Hono();
 

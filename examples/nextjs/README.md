@@ -14,7 +14,7 @@ Use `environment` for first-class API selection:
 `src/lib/talo.ts`
 
 ```ts
-import { TaloClient } from "@talo/pay-sdk";
+import { TaloClient } from "talo-pay";
 
 export const talo = new TaloClient({
   clientId: process.env.TALO_CLIENT_ID!,

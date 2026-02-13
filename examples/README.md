@@ -7,7 +7,7 @@ This folder contains practical integration examples for Talo payments in popular
 - [Elysia](./elysia/README.md)
 - [NestJS](./nestjs/README.md)
 
-All examples use `@talo/pay-sdk` and show:
+All examples use `talo-pay` and show:
 - Credentials-based client initialization (`clientId`, `clientSecret`, `userId`).
 - Environment selection via `environment: "production" | "sandbox"`.
 - Payment creation endpoint.
