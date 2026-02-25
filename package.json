@@ -1,6 +1,6 @@
 {
   "name": "talo-pay",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Type-safe WinterCG-compatible TypeScript SDK for Talo Pay API",
   "type": "module",
   "main": "./dist/index.cjs",
