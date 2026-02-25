@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { TaloClient } from "../src";
+import { createWebhookHandler, TaloClient } from "../src";
 import type { FetchLike } from "../src/types";
 
 function createClient(fetchImpl: FetchLike): TaloClient {
@@ -126,5 +126,70 @@ describe("TaloWebhooks", () => {
 
     const response = await handler(request);
     expect(response.status).toBe(502);
+  });
+
+  test("builds a handler from top-level SDK export", async () => {
+    let authCalls = 0;
+    let paymentCalls = 0;
+    let callbackStatus = "";
+
+    const handler = createWebhookHandler(
+      {
+        clientId: "client_123",
+        clientSecret: "secret_456",
+        userId: "user_789",
+        fetch: async (input) => {
+          const url = String(input);
+
+          if (url.endsWith("/users/user_789/tokens")) {
+            authCalls += 1;
+            return new Response(JSON.stringify({ data: { token: "token_abc" } }), {
+              status: 200,
+              headers: { "content-type": "application/json" },
+            });
+          }
+
+          if (url.endsWith("/payments/payment_999")) {
+            paymentCalls += 1;
+            return new Response(
+              JSON.stringify({
+                data: {
+                  id: "payment_999",
+                  payment_status: "SUCCESS",
+                  external_id: "order_999",
+                },
+              }),
+              {
+                status: 200,
+                headers: { "content-type": "application/json" },
+              },
+            );
+          }
+
+          return new Response("Not found", { status: 404 });
+        },
+      },
+      {
+        onPaymentUpdated: async ({ payment }) => {
+          callbackStatus = payment.payment_status;
+        },
+      },
+    );
+
+    const request = new Request("https://example.com/webhooks/talo", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        message: "Pago Actualizado",
+        paymentId: "payment_999",
+        externalId: "order_999",
+      }),
+    });
+
+    const response = await handler(request);
+    expect(response.status).toBe(200);
+    expect(authCalls).toBe(1);
+    expect(paymentCalls).toBe(1);
+    expect(callbackStatus).toBe("SUCCESS");
   });
 });

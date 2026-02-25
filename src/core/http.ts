@@ -16,6 +16,7 @@ export interface TaloRequestOptions<
 > {
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   path: string;
+  auth?: "required" | "none";
   body?: unknown;
   headers?: HeadersInit;
   requestSchema?: TRequestSchema;
@@ -84,6 +85,8 @@ export class TaloHttpClient {
     }
 
     const hasCustomAuthorization = baseHeaders.has("authorization");
+    const shouldUseManagedAuth =
+      (options.auth ?? "required") === "required" && !hasCustomAuthorization;
 
     const executeRequest = async (
       authorizationToken: string | undefined,
@@ -119,13 +122,13 @@ export class TaloHttpClient {
       return this.fetchImpl(buildUrl(this.baseUrl, options.path), init);
     };
 
-    const initialToken = hasCustomAuthorization
-      ? undefined
-      : await this.tokenProvider.getAccessToken();
+    const initialToken = shouldUseManagedAuth
+      ? await this.tokenProvider.getAccessToken()
+      : undefined;
 
     let response = await executeRequest(initialToken);
 
-    if (response.status === 401 && !hasCustomAuthorization) {
+    if (response.status === 401 && shouldUseManagedAuth) {
       const refreshedToken = await this.tokenProvider.getAccessToken({
         forceRefresh: true,
       });

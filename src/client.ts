@@ -3,6 +3,7 @@ import { TaloTokenManager } from "./core/auth";
 import { TaloHttpClient } from "./core/http";
 import { CustomersResource } from "./resources/customers";
 import { PaymentsResource } from "./resources/payments";
+import { PartnersResource } from "./resources/partners";
 import { RefundsResource } from "./resources/refunds";
 import { SandboxResource } from "./resources/sandbox";
 import { TaloWebhooks } from "./webhooks";
@@ -12,6 +13,10 @@ import type {
   CreateRefundRequest,
   CustomerResponse,
   CustomerTransactionResponse,
+  PartnerAccountResponse,
+  PartnerAuthorizationUrlOptions,
+  PartnerTokenExchangeRequest,
+  PartnerTokenExchangeResponse,
   PaymentResponse,
   RefundResponse,
   SimulateFaucetRequest,
@@ -19,6 +24,7 @@ import type {
   TaloEnvironment,
   TaloClientConfig,
   UpdatePaymentMetadataRequest,
+  UpdatePartnerAccountRequest,
   FetchLike,
 } from "./types";
 
@@ -38,7 +44,7 @@ const clientConfigSchema = z.object({
 });
 
 /**
- * Talo API client for Payments, Customers, Refunds and Webhooks.
+ * Talo API client for Payments, Customers, Partners, Refunds and Webhooks.
  *
  * Access tokens are automatically fetched and refreshed from
  * POST /users/:user_id/tokens using client credentials.
@@ -46,6 +52,7 @@ const clientConfigSchema = z.object({
 export class TaloClient {
   readonly payments: PaymentsResource;
   readonly customers: CustomersResource;
+  readonly partners: PartnersResource;
   readonly refunds: RefundsResource;
   readonly sandbox: SandboxResource;
   readonly webhooks: TaloWebhooks;
@@ -75,6 +82,7 @@ export class TaloClient {
 
     this.payments = new PaymentsResource(httpClient);
     this.customers = new CustomersResource(httpClient);
+    this.partners = new PartnersResource(httpClient);
     this.refunds = new RefundsResource(httpClient);
     this.sandbox = new SandboxResource(httpClient);
     this.webhooks = new TaloWebhooks((paymentId) => this.payments.get(paymentId));
@@ -126,6 +134,42 @@ export class TaloClient {
     transactionId: string,
   ): Promise<CustomerTransactionResponse> {
     return this.customers.getTransaction(customerId, transactionId);
+  }
+
+  /**
+   * Alias for partners.getAuthorizationUrl().
+   */
+  getPartnerAuthorizationUrl(
+    partnerId: string,
+    options: PartnerAuthorizationUrlOptions = {},
+  ): string {
+    return this.partners.getAuthorizationUrl(partnerId, options);
+  }
+
+  /**
+   * Alias for partners.exchangeToken().
+   */
+  exchangePartnerToken(
+    input: PartnerTokenExchangeRequest,
+  ): Promise<PartnerTokenExchangeResponse> {
+    return this.partners.exchangeToken(input);
+  }
+
+  /**
+   * Alias for partners.getAccount().
+   */
+  getPartnerAccount(userId: string): Promise<PartnerAccountResponse> {
+    return this.partners.getAccount(userId);
+  }
+
+  /**
+   * Alias for partners.updateAccount().
+   */
+  updatePartnerAccount(
+    userId: string,
+    input: UpdatePartnerAccountRequest,
+  ): Promise<PartnerAccountResponse> {
+    return this.partners.updateAccount(userId, input);
   }
 
   /**

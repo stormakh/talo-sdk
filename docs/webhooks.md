@@ -10,16 +10,14 @@ The webhook flow is:
 ## Next.js App Router example
 
 ```ts
-import { TaloClient } from "talo-pay";
+import { createWebhookHandler } from "talo-pay";
 
-const talo = new TaloClient({
+const handler = createWebhookHandler({
   clientId: process.env.TALO_CLIENT_ID!,
   clientSecret: process.env.TALO_CLIENT_SECRET!,
   userId: process.env.TALO_USER_ID!,
   environment: "sandbox"
-});
-
-const handler = talo.webhooks.handler({
+}, {
   onPaymentUpdated: async ({ event, payment }) => {
     console.log("Webhook event", event.paymentId, event.externalId);
     console.log("Current status", payment.payment_status);

@@ -1,4 +1,5 @@
 export { TaloClient } from "./client";
+export { createWebhookHandler } from "./create-webhook-handler";
 export { TaloError } from "./core/errors";
 export { TaloWebhooks } from "./webhooks";
 
@@ -19,17 +20,26 @@ export {
   customerTransactionSchema,
   faucetRequestSchema,
   faucetResponseSchema,
+  partnerAccountResponseSchema,
+  partnerAccountSchema,
+  partnerConfigSchema,
+  partnerTokenExchangeRequestSchema,
+  partnerTokenExchangeResponseSchema,
   paymentOptionSchema,
   paymentResponseSchema,
   paymentSchema,
   paymentStatusSchema,
+  payoutFrequencySchema,
+  payoutScheduleSchema,
   transactionFieldSchema,
   transactionSchema,
   paymentUpdatedWebhookEventSchema,
   priceSchema,
   quoteSchema,
+  refundBlameSchema,
   refundResponseSchema,
   refundSchema,
+  updatePartnerAccountRequestSchema,
   updatePaymentMetadataRequestSchema,
   webhookEventSchema,
 } from "./schemas";
@@ -43,6 +53,12 @@ export type {
   CreateRefundRequest,
   CustomerResponse,
   CustomerTransactionResponse,
+  PartnerAccountResponse,
+  PartnerAccountResponseEnvelope,
+  PartnerAuthorizationUrlOptions,
+  PartnerTokenExchangeRequest,
+  PartnerTokenExchangeResponse,
+  PartnerTokenExchangeResponseEnvelope,
   ParsedWebhookPayload,
   PaymentResponse,
   PaymentUpdatedWebhookEvent,
@@ -53,6 +69,7 @@ export type {
   TaloClientConfig,
   TaloEnvironment,
   TaloWebhookEvent,
+  UpdatePartnerAccountRequest,
   UpdatePaymentMetadataRequest,
   WebhookHandlerOptions,
 } from "./types";

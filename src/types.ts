@@ -10,9 +10,13 @@ import {
   customerTransactionResponseSchema,
   faucetRequestSchema,
   faucetResponseSchema,
+  partnerAccountResponseSchema,
+  partnerTokenExchangeRequestSchema,
+  partnerTokenExchangeResponseSchema,
   paymentResponseSchema,
   paymentUpdatedWebhookEventSchema,
   refundResponseSchema,
+  updatePartnerAccountRequestSchema,
   updatePaymentMetadataRequestSchema,
 } from "./schemas";
 
@@ -36,6 +40,27 @@ export interface TaloClientConfig {
 export type AuthorizeRequest = z.infer<typeof authorizeRequestSchema>;
 export type AuthorizeResponseEnvelope = z.infer<typeof authorizeResponseSchema>;
 export type AuthorizeResponse = AuthorizeResponseEnvelope["data"];
+
+export interface PartnerAuthorizationUrlOptions {
+  referredUserId?: string | undefined;
+}
+
+export type PartnerTokenExchangeRequest = z.infer<
+  typeof partnerTokenExchangeRequestSchema
+>;
+export type PartnerTokenExchangeResponseEnvelope = z.infer<
+  typeof partnerTokenExchangeResponseSchema
+>;
+export type PartnerTokenExchangeResponse =
+  PartnerTokenExchangeResponseEnvelope["data"];
+
+export type UpdatePartnerAccountRequest = z.infer<
+  typeof updatePartnerAccountRequestSchema
+>;
+export type PartnerAccountResponseEnvelope = z.infer<
+  typeof partnerAccountResponseSchema
+>;
+export type PartnerAccountResponse = PartnerAccountResponseEnvelope["data"];
 
 export type CreatePaymentRequest = z.infer<typeof createPaymentRequestSchema>;
 export type UpdatePaymentMetadataRequest = z.infer<

@@ -70,19 +70,56 @@ const payment = await talo.payments.create({
 console.log(payment.id, payment.payment_status);
 ```
 
+## Create a refund
+
+```ts
+const refund = await talo.refunds.create("VAR-123", {
+  refund_type: "PARTIAL", // or "FULL"
+  amount: "500.00", // required only for PARTIAL
+  currency: "ARS", // required only for PARTIAL
+  blame: {
+    team_id: "soporte",
+    mail: "soporte@your-app.com",
+  },
+  user_id: process.env.TALO_USER_ID!,
+});
+
+console.log(refund.refund_id, refund.status);
+```
+
+## Partner flows
+
+```ts
+// 1) Redirect URL to onboard a user
+const authorizationUrl = talo.partners.getAuthorizationUrl("partner_id", {
+  referredUserId: "external_user_123",
+});
+
+// 2) Exchange callback code for partner token + user mapping
+const exchange = await talo.partners.exchangeToken({
+  code: "code_from_redirect",
+  client_id: process.env.TALO_PARTNER_ID!,
+  client_secret: process.env.TALO_PARTNER_SECRET!,
+});
+
+// 3) Query/update account config
+const account = await talo.partners.getAccount(exchange.user_id);
+await talo.partners.updateAccount(exchange.user_id, {
+  transfer_tolerance: 15,
+});
+```
+
 ## Next.js App Router webhook route
 
 ```ts
-import { TaloClient } from "talo-pay";
+import { createWebhookHandler } from "talo-pay";
 
-const talo = new TaloClient({
+const handler = createWebhookHandler({
   clientId: process.env.TALO_CLIENT_ID!,
   clientSecret: process.env.TALO_CLIENT_SECRET!,
   userId: process.env.TALO_USER_ID!,
   environment: "sandbox",
-});
-
-const handler = talo.webhooks.handler({
+}, {
   onPaymentUpdated: async ({ event, payment }) => {
     console.log(event.paymentId, event.externalId, payment.payment_status);
   },
@@ -97,6 +134,8 @@ export async function POST(request: Request): Promise<Response> {
 
 - Getting started: `docs/getting-started.md`
 - Environments: `docs/environments.md`
+- Partners: `docs/partners.md`
+- Refunds: `docs/refunds.md`
 - Webhooks: `docs/webhooks.md`
 
 ## Resources
@@ -107,9 +146,14 @@ export async function POST(request: Request): Promise<Response> {
 - `talo.customers.create(...)`
 - `talo.customers.get(...)`
 - `talo.customers.getTransaction(...)`
+- `talo.partners.getAuthorizationUrl(...)`
+- `talo.partners.exchangeToken(...)`
+- `talo.partners.getAccount(...)`
+- `talo.partners.updateAccount(...)`
 - `talo.refunds.create(...)`
 - `talo.sandbox.simulateCvuTransfer(...)`
 - `talo.webhooks.handler(...)`
+- `createWebhookHandler(...)`
 
 Top-level aliases are available too (for example, `talo.createPayment(...)`).
 

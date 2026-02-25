@@ -51,6 +51,75 @@ export const authorizeDataSchema = z
   })
   .passthrough();
 
+export const partnerTokenExchangeRequestSchema = z.object({
+  code: z.string().min(1),
+  client_id: z.string().min(1),
+  client_secret: z.string().min(1),
+}).strict();
+
+export const partnerTokenExchangeDataSchema = z
+  .object({
+    token: z.string().min(1),
+    user_id: z.string().min(1),
+    referred_user_id: z.string().optional(),
+  })
+  .passthrough();
+
+export const payoutFrequencySchema = z.enum([
+  "bi_daily",
+  "daily",
+  "weekly",
+  "monthly",
+]);
+
+export const payoutScheduleSchema = z
+  .object({
+    address: z.string().min(1),
+    frequency: payoutFrequencySchema,
+  })
+  .strict();
+
+export const partnerConfigSchema = z
+  .object({
+    commission: z.number().optional(),
+    partner_id: z.string().optional(),
+    partner_name: z.string().optional(),
+    partner_slug: z.string().optional(),
+  })
+  .passthrough();
+
+export const partnerAccountSchema = z
+  .object({
+    account_status: z.enum(["ACTIVE", "PENDING", "REJECTED", "SUSPENDED"]).optional(),
+    alias_prefix: z.string().optional(),
+    cancellation_period: z.number().int().optional(),
+    transfer_tolerance: z.number().int().optional(),
+    payout_schedule: payoutScheduleSchema.optional(),
+    user_id: z.string().optional(),
+    partner_config: partnerConfigSchema.optional(),
+  })
+  .passthrough();
+
+export const updatePartnerAccountRequestSchema = z
+  .object({
+    alias_prefix: z
+      .string()
+      .min(1)
+      .max(8)
+      .regex(
+        /^[a-z0-9_]+$/,
+        "alias_prefix must contain lowercase letters, numbers or underscore",
+      )
+      .optional(),
+    cancellation_period: z.number().int().min(1).max(200).optional(),
+    transfer_tolerance: z.number().int().min(0).max(10000).optional(),
+    payout_schedule: payoutScheduleSchema.optional(),
+  })
+  .strict()
+  .refine((value) => Object.keys(value).length > 0, {
+    message: "At least one field must be provided for account update",
+  });
+
 export const createPaymentRequestSchema = z.object({
   user_id: z.string().min(1),
   price: createPaymentPriceSchema,
@@ -166,22 +235,31 @@ export const customerTransactionSchema = z
   })
   .passthrough();
 
-export const createRefundRequestSchema = z
-  .object({
-    amount: numericAmountSchema.optional(),
-    refund_type: z.enum(["FULL", "PARTIAL"]),
-    motive: z.string().min(1),
-    blame: z.enum(["CLIENT", "CUSTOMER", "THIRD_PARTY"]),
-  })
-  .superRefine((value, ctx) => {
-    if (value.refund_type === "PARTIAL" && value.amount === undefined) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["amount"],
-        message: "amount is required when refund_type is PARTIAL",
-      });
-    }
-  });
+export const refundBlameSchema = z.object({
+  team_id: z.string().min(1),
+  mail: z.string().min(1),
+}).strict();
+
+const fullRefundRequestSchema = z.object({
+  refund_type: z.literal("FULL"),
+  blame: refundBlameSchema,
+  user_id: z.string().min(1),
+}).strict();
+
+const partialRefundRequestSchema = z.object({
+  refund_type: z.literal("PARTIAL"),
+  amount: z
+    .string()
+    .regex(/^\d+(\.\d+)?$/, "amount must be a numeric string"),
+  currency: currencySchema,
+  blame: refundBlameSchema,
+  user_id: z.string().min(1),
+}).strict();
+
+export const createRefundRequestSchema = z.discriminatedUnion("refund_type", [
+  fullRefundRequestSchema,
+  partialRefundRequestSchema,
+]);
 
 export const refundSchema = z
   .object({
@@ -224,6 +302,10 @@ export const customerTransactionResponseSchema = successEnvelopeSchema(
 );
 export const refundResponseSchema = successEnvelopeSchema(refundSchema);
 export const authorizeResponseSchema = successEnvelopeSchema(authorizeDataSchema);
+export const partnerTokenExchangeResponseSchema = successEnvelopeSchema(
+  partnerTokenExchangeDataSchema,
+);
+export const partnerAccountResponseSchema = successEnvelopeSchema(partnerAccountSchema);
 
 export const paymentUpdatedWebhookEventSchema = z
   .object({
