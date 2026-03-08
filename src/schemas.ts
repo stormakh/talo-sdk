@@ -25,6 +25,7 @@ export const priceSchema = z.object({
 });
 
 export const createPaymentPriceSchema = z.object({
+  /** Amount in whole currency units (e.g. 100 = 100 ARS, not cents). */
   amount: z.number(),
   currency: currencySchema,
 });

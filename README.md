@@ -54,7 +54,7 @@ const talo = new TaloClient({
 
 const payment = await talo.payments.create({
   user_id: process.env.TALO_USER_ID!,
-  price: { amount: 10000, currency: "ARS" },
+  price: { amount: 1500, currency: "ARS" }, // 1500 ARS
   payment_options: ["transfer"],
   external_id: "order_12345",
   webhook_url: "https://your-app.com/api/talo/webhook",

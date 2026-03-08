@@ -11,7 +11,7 @@ const talo = new TaloClient({
 const payment = await talo.createPayment({
   user_id: process.env.TALO_USER_ID!,
   price: {
-    amount: 10000,
+    amount: 1500, // 1500 ARS
     currency: "ARS",
   },
   payment_options: ["transfer"],
