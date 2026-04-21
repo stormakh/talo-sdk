@@ -130,6 +130,8 @@ export const createPaymentRequestSchema = z.object({
   redirect_url: z.string().url().optional(),
   motive: z.string().min(1).optional(),
   client_data: clientDataSchema.optional(),
+  /** Partner identifier attributing payment creation to a specific partner. Required for partners, optional for direct customers. */
+  partner_id: z.string().min(1).optional(),
 });
 
 export const updatePaymentMetadataRequestSchema = z.object({
@@ -188,6 +190,7 @@ export const paymentSchema = z
     motive: z.string().optional(),
     client_data: clientDataSchema.optional(),
     metadata: z.record(z.unknown()).optional(),
+    partner_id: z.string().optional(),
   })
   .passthrough();
 

@@ -65,6 +65,7 @@ const payment = await talo.payments.create({
     email: "juan@example.com",
     dni: "12345678",
   },
+  // partner_id: process.env.TALO_PARTNER_ID, // required when operating as a partner
 });
 
 console.log(payment.id, payment.payment_status);
