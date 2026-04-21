@@ -37,6 +37,23 @@ console.log(account.account_status);
 - `REJECTED`
 - `SUSPENDED`
 
+## Create payment as partner
+
+Partners must include their `partner_id` when creating payments so Talo can attribute the payment to the originating partner.
+
+```ts
+const payment = await talo.payments.create({
+  user_id: exchange.user_id,
+  price: { amount: 1500, currency: "ARS" },
+  payment_options: ["transfer"],
+  external_id: "order_12345",
+  webhook_url: "https://your-app.com/api/talo/webhook",
+  partner_id: process.env.TALO_PARTNER_ID!,
+});
+```
+
+`partner_id` is optional at the SDK level (direct customers omit it) but required by the Talo API when operating as a partner.
+
 ## Update account configuration
 
 ```ts
